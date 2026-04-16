@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { Providers } from "@/components/Providers";
 
 export const metadata: Metadata = {
   title: "Zyric — Smart budget tracking",
@@ -22,7 +23,7 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body className="min-h-screen bg-paper text-ink">
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

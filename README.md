@@ -1,79 +1,112 @@
 # Zyric — Finance Tracker
 
-Application de suivi de finances premium dans un style clair, inspirée d'un
-design app mobile (balance, objectifs, statistiques).
+App de suivi de finances premium, format mobile, **entièrement
+fonctionnelle** : ajout / suppression de transactions, gestion de budgets
+par catégorie, objectif d'épargne, export CSV. Les données sont persistées
+localement (localStorage).
 
 ![Stack](https://img.shields.io/badge/Next.js-14-black) ![Stack](https://img.shields.io/badge/React-18-149ECA) ![Stack](https://img.shields.io/badge/Tailwind-3-38BDF8) ![Stack](https://img.shields.io/badge/TypeScript-5-3178C6)
 
-## Aperçu
+## Fonctionnalités
 
-Quatre vues principales accessibles depuis la barre de navigation flottante :
+**Accueil**
+- Solde total (calculé à partir de toutes les transactions)
+- Graphique d'évolution du patrimoine sur 30 jours (aire dégradée)
+- Objectif d'épargne (avec progression)
+- Dépenses du mois + histogramme 12 mois glissants
+- Transactions récentes avec suppression au clic
 
-- **Accueil** : Solde disponible, objectif en cours, dépenses mensuelles
-  (histogramme), activité, transactions récentes.
-- **Rapports** : Valeur nette (aire), dépenses max / min, répartition des
-  revenus (donut), insights automatiques.
-- **Budget** : Revenus du mois, répartition (salaire, business, invest.),
-  budget global + budget par catégorie avec barres de progression.
-- **Compte** : Profil, préférences, sécurité.
+**Rapports**
+- Courbe du patrimoine (même série, plus grande)
+- Cartes « Dépense max » et « Dépense min » du mois en cours
+- Donut de répartition des revenus (ce mois)
+- Insights générés automatiquement (taux d'épargne, alerte déficit, etc.)
+
+**Budget**
+- Revenus du mois + taux d'épargne
+- Mini-cards top 3 sources de revenus
+- Budget global avec barre de progression
+- Budgets par catégorie (CRUD complet : créer / modifier / supprimer)
+- Spent calculé dynamiquement à partir des transactions de la catégorie
+
+**Compte**
+- Statistiques du store (nb transactions, budgets, objectifs)
+- Export CSV des transactions
+- Réinitialisation totale (double confirmation)
 
 ## Stack
 
 - **Next.js 14** (App Router) + **TypeScript**
-- **Tailwind CSS** avec design system custom (palette pastel, radius 4xl/5xl,
-  ombres `card` / `soft` / `pop`)
+- **Tailwind CSS** avec design system custom (palette pastel, radius
+  4xl/5xl, ombres `card` / `soft` / `pop`, gradients `brand` / `hero`)
 - **Recharts** pour toutes les visualisations
 - **lucide-react** pour les icônes
+- **localStorage** pour la persistance (clé `zyric:state:v1`)
 
 ## Démarrer
 
 ```bash
 npm install
-npm run dev          # dev mode → http://localhost:3000
-npm run build        # build de production
-npm start            # serveur de production
+npm run dev     # http://localhost:3000
+npm run build
+npm start
 ```
 
 ## Structure
 
 ```
 app/
-  layout.tsx         Root layout + fonts + gradient
-  page.tsx           Vue Accueil
-  reports/page.tsx   Vue Rapports
-  budget/page.tsx    Vue Budget
-  account/page.tsx   Vue Compte
+  layout.tsx              Root layout + Providers + fonts
+  page.tsx                Accueil (solde + chart patrimoine + transactions)
+  reports/page.tsx        Rapports (net worth, extrêmes, revenus, insights)
+  budget/page.tsx         Budget (revenus, CRUD budgets, objectif)
+  account/page.tsx        Compte (export, reset)
 components/
-  Shell.tsx          Top bar + bottom nav flottante
-  ui.tsx             Card, Money, Chip, ProgressBar, IconBadge…
-  Icon.tsx           Proxy lucide dynamique
+  Shell.tsx               Top bar + bottom nav + cadre mobile 430px
+  Providers.tsx           Enveloppe <StoreProvider>
+  Sheet.tsx               Bottom sheet + Field/Input/Buttons
+  Icon.tsx                Proxy lucide dynamique
+  ui.tsx                  Card, Money, Chip, ProgressBar, IconBadge
   charts/
-    ExpensesBarChart.tsx
-    NetWorthChart.tsx
-    IncomeDonut.tsx
-    SportActivityChart.tsx
+    ExpensesBarChart.tsx  Histogramme 12 mois
+    NetWorthArea.tsx      Aire patrimoine (live, sous le solde)
+    IncomeDonut.tsx       Donut revenus (live)
+  sheets/
+    AddTransactionSheet.tsx  Formulaire dépense / revenu
+    BudgetSheet.tsx          CRUD budget par catégorie
+    GoalSheet.tsx            CRUD objectif d'épargne
 lib/
-  data.ts            Seed data (catégories, budgets, transactions, séries)
+  types.ts                Transaction, Budget, Goal, StoreState
+  categories.ts           Catégories préréglées (icônes + couleurs)
+  store.tsx               React Context + useReducer + localStorage
+  derived.ts              Sélecteurs : balance, net worth series,
+                          month expenses, income breakdown, savings rate
 ```
 
-## Design system
+## Modèle de données
 
-| Token        | Usage                                    |
-| ------------ | ---------------------------------------- |
-| `ink`        | Texte principal (#0F0B1E)                |
-| `ink-muted`  | Texte secondaire                         |
-| `paper`      | Fond global                              |
-| `surface-*`  | Fonds de badges (lilac, blush, cream)    |
-| `accent-*`   | Couleurs d'accent (pink, rose, purple…)  |
-| `brand-gradient` / `hero-gradient` | Fonds premium         |
-| `pill-gradient` | CTA gradient violet → rose             |
+```ts
+type Transaction = {
+  id: string;
+  kind: "income" | "expense";
+  amount: number;       // toujours positif, le signe vient du `kind`
+  categoryId: string;   // id de CATEGORY_PRESETS
+  label: string;
+  date: string;         // ISO YYYY-MM-DD
+  createdAt: number;
+};
 
-Les chiffres utilisent `tabular-nums` et la police d'affichage
-`Plus Jakarta Sans` pour un rendu « premium ».
+type Budget = { id; name; icon; tint; accent; amount; categoryId };
+type Goal   = { id; title; target; saved; deadline; started };
+```
+
+Tous les chiffres affichés (solde, net worth, depenses du mois, spent par
+budget, etc.) sont **dérivés** des transactions en temps réel — il n'y a
+aucune valeur en dur.
 
 ## Notes
 
-- Les données sont **fictives** (voir `lib/data.ts`). Brancher une source
-  réelle (API, DB) est trivial : chaque vue lit uniquement depuis ce fichier.
-- L'app est **responsive** : la grille passe d'une colonne en mobile à 3
-  colonnes en desktop (layout 2/3 + 1/3).
+- **Mobile-first** : cadre fixe à 430 px sur fond neutre, nav flottante.
+- **Persistance** : les données sont conservées dans `localStorage`. Tout
+  passe par le contexte `StoreProvider` (hook `useStore`).
+- **Offline ready** : aucune requête réseau requise pour utiliser l'app.

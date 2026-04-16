@@ -1,16 +1,21 @@
 "use client";
 
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { incomeBreakdown } from "@/lib/data";
 
-export function IncomeDonut({ size = 180 }: { size?: number }) {
-  const total = incomeBreakdown.reduce((s, x) => s + x.value, 0);
+type Slice = { name: string; value: number; color: string };
 
-  // Anneau « placeholder » quand tout est à 0
-  const data =
+export function IncomeDonut({
+  data,
+  size = 180,
+}: {
+  data: Slice[];
+  size?: number;
+}) {
+  const total = data.reduce((s, x) => s + x.value, 0);
+  const pie =
     total === 0
       ? [{ name: "Vide", value: 1, color: "#EEE8FA" }]
-      : incomeBreakdown;
+      : data;
 
   return (
     <div className="relative" style={{ width: size, height: size }}>
@@ -28,13 +33,13 @@ export function IncomeDonut({ size = 180 }: { size?: number }) {
                 padding: "8px 10px",
               }}
               formatter={(v: number, name) => [
-                `€${v.toLocaleString("fr-FR", { maximumFractionDigits: 2 })}`,
+                `€${Number(v).toLocaleString("fr-FR", { maximumFractionDigits: 2 })}`,
                 name as string,
               ]}
             />
           )}
           <Pie
-            data={data}
+            data={pie}
             dataKey="value"
             nameKey="name"
             innerRadius={size / 2 - 28}
@@ -43,8 +48,8 @@ export function IncomeDonut({ size = 180 }: { size?: number }) {
             cornerRadius={12}
             stroke="none"
           >
-            {data.map((entry) => (
-              <Cell key={entry.name} fill={entry.color} />
+            {pie.map((entry, i) => (
+              <Cell key={`${entry.name}-${i}`} fill={entry.color} />
             ))}
           </Pie>
         </PieChart>

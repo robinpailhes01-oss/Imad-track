@@ -1,15 +1,74 @@
+"use client";
+
+import { useMemo, useState } from "react";
 import { Shell } from "@/components/Shell";
 import { Card, Chip, IconBadge, Money, SectionTitle } from "@/components/ui";
-import { NetWorthChart } from "@/components/charts/NetWorthChart";
+import { NetWorthArea } from "@/components/charts/NetWorthArea";
 import { IncomeDonut } from "@/components/charts/IncomeDonut";
-import { incomeBreakdown, overview } from "@/lib/data";
-import { ArrowUpRight } from "lucide-react";
+import { AddTransactionSheet } from "@/components/sheets/AddTransactionSheet";
+import { useStore } from "@/lib/store";
+import {
+  expenseExtremes,
+  incomeBreakdown,
+  monthlyExpensesTotal,
+  monthlyIncome,
+  netWorthSeries,
+  savingsRate,
+  totalBalance,
+} from "@/lib/derived";
+import { ArrowUpRight, Sparkles } from "lucide-react";
 
 export default function ReportsPage() {
-  const { netWorth, highestExpense, lowestExpense } = overview;
+  const { state } = useStore();
+  const [txOpen, setTxOpen] = useState(false);
+
+  const balance = useMemo(() => totalBalance(state), [state]);
+  const nwSeries = useMemo(() => netWorthSeries(state, 30), [state]);
+  const first = nwSeries[0]?.value ?? 0;
+  const last = nwSeries[nwSeries.length - 1]?.value ?? 0;
+  const nwDelta =
+    first === 0 ? (last > 0 ? 100 : 0) : ((last - first) / Math.abs(first)) * 100;
+
+  const { highest, lowest } = useMemo(() => expenseExtremes(state), [state]);
+  const incomes = useMemo(() => incomeBreakdown(state), [state]);
+  const mIncome = useMemo(() => monthlyIncome(state), [state]);
+  const mExpense = useMemo(() => monthlyExpensesTotal(state), [state]);
+  const save = useMemo(() => savingsRate(state), [state]);
+
+  const insights: { icon: string; tint: string; accent: string; title: string; detail: string }[] = [];
+  if (mIncome > 0) {
+    insights.push({
+      icon: "Sparkles",
+      tint: "bg-surface-lilac",
+      accent: "text-accent-purple",
+      title: `Tu économises ${Math.round(save * 100)}% de tes revenus`,
+      detail:
+        save >= 0.3
+          ? "Excellent, continue comme ça !"
+          : "Essaie d'atteindre 30 % pour accélérer tes objectifs.",
+    });
+  }
+  if (mExpense > mIncome && mIncome > 0) {
+    insights.push({
+      icon: "AlertTriangle",
+      tint: "bg-surface-blush",
+      accent: "text-accent-rose",
+      title: "Dépenses supérieures aux revenus",
+      detail: `−€${(mExpense - mIncome).toFixed(2)} ce mois-ci.`,
+    });
+  }
+  if (state.transactions.length >= 5) {
+    insights.push({
+      icon: "BarChart3",
+      tint: "bg-surface-cream",
+      accent: "text-accent-amber",
+      title: `${state.transactions.length} transactions enregistrées`,
+      detail: "Zyric commence à dessiner une tendance fiable.",
+    });
+  }
 
   return (
-    <Shell>
+    <Shell onAdd={() => setTxOpen(true)}>
       <div className="flex flex-col gap-4">
         {/* NET WORTH */}
         <Card>
@@ -19,19 +78,18 @@ export default function ReportsPage() {
                 Valeur nette totale
               </p>
               <div className="mt-1 flex items-center gap-2">
-                <Money value={netWorth} />
-                <Chip tone="neutral">0%</Chip>
+                <Money value={balance} />
+                <Chip tone={nwDelta >= 0 ? "positive" : "negative"}>
+                  {`${nwDelta >= 0 ? "+" : "−"}${Math.abs(nwDelta).toFixed(1)}%`}
+                </Chip>
               </div>
             </div>
-            <button className="flex h-8 items-center gap-1 rounded-full bg-surface-lilac px-3 text-[11px] font-semibold text-accent-purple">
-              Mois
-              <svg viewBox="0 0 12 12" className="h-3 w-3" fill="none">
-                <path d="M3 4.5 6 7.5 9 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
+            <span className="flex h-8 items-center gap-1 rounded-full bg-surface-lilac px-3 text-[11px] font-semibold text-accent-purple">
+              30 j
+            </span>
           </div>
           <div className="mt-4">
-            <NetWorthChart />
+            <NetWorthArea data={nwSeries} height={160} showAxis />
           </div>
         </Card>
 
@@ -48,10 +106,10 @@ export default function ReportsPage() {
               Dépense max
             </p>
             <div className="mt-1">
-              <Money value={highestExpense} sign />
+              <Money value={highest} sign={highest > 0} />
             </div>
             <p className="mt-1 text-[10px] text-ink-muted">
-              Aucun historique
+              {highest > 0 ? "Ce mois-ci" : "Aucun historique"}
             </p>
           </Card>
 
@@ -66,10 +124,10 @@ export default function ReportsPage() {
               Dépense min
             </p>
             <div className="mt-1">
-              <Money value={lowestExpense} sign />
+              <Money value={lowest} sign={lowest > 0} />
             </div>
             <p className="mt-1 text-[10px] text-ink-muted">
-              Aucun historique
+              {lowest > 0 ? "Ce mois-ci" : "Aucun historique"}
             </p>
           </Card>
         </div>
@@ -78,49 +136,75 @@ export default function ReportsPage() {
         <Card>
           <SectionTitle
             title="Revenus"
-            subtitle="Répartition de vos sources"
+            subtitle="Répartition du mois en cours"
           />
           <div className="mt-4 flex items-center justify-center">
-            <IncomeDonut size={180} />
+            <IncomeDonut data={incomes} size={180} />
           </div>
-          <ul className="mt-4 space-y-2">
-            {incomeBreakdown.map((item) => (
-              <li
-                key={item.name}
-                className="flex items-center justify-between rounded-2xl border border-white/60 bg-white/70 px-3 py-2.5"
-              >
-                <div className="flex items-center gap-3">
-                  <span
-                    className="h-3 w-3 rounded-full"
-                    style={{ background: item.color }}
-                  />
-                  <div>
-                    <p className="text-sm font-semibold text-ink">
-                      {item.name}
-                    </p>
-                    <p className="text-[11px] text-ink-muted">0%</p>
-                  </div>
-                </div>
-                <Money value={item.value} />
-              </li>
-            ))}
-          </ul>
+          {incomes.length === 0 ? (
+            <p className="mt-4 text-center text-[11px] text-ink-muted">
+              Ajoute un revenu pour voir la répartition.
+            </p>
+          ) : (
+            <ul className="mt-4 space-y-2">
+              {incomes.map((item) => {
+                const total = incomes.reduce((s, i) => s + i.value, 0);
+                const pct = ((item.value / total) * 100).toFixed(1);
+                return (
+                  <li
+                    key={item.id}
+                    className="flex items-center justify-between rounded-2xl border border-white/60 bg-white/70 px-3 py-2.5"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span
+                        className="h-3 w-3 rounded-full"
+                        style={{ background: item.color }}
+                      />
+                      <div>
+                        <p className="text-sm font-semibold text-ink">
+                          {item.name}
+                        </p>
+                        <p className="text-[11px] text-ink-muted">{pct}%</p>
+                      </div>
+                    </div>
+                    <Money value={item.value} />
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </Card>
 
         {/* INSIGHTS */}
         <Card>
-          <SectionTitle title="Insights" subtitle="Ce mois-ci" />
-          <div className="mt-4 flex flex-col items-center rounded-3xl border border-dashed border-ink/10 bg-white/50 p-6 text-center">
-            <IconBadge name="Sparkles" tint="bg-surface-lilac" accent="text-accent-purple" size={44} />
-            <p className="mt-3 font-display text-sm font-bold text-ink">
-              Pas encore d'insights
-            </p>
-            <p className="mt-1 max-w-[280px] text-[11px] text-ink-muted">
-              Ajoutez des transactions pour que Zyric génère automatiquement des analyses personnalisées.
-            </p>
-          </div>
+          <SectionTitle title="Insights" subtitle="Calculés à partir de vos données" />
+          {insights.length === 0 ? (
+            <div className="mt-4 flex flex-col items-center rounded-3xl border border-dashed border-ink/10 bg-white/50 p-6 text-center">
+              <IconBadge name="Sparkles" tint="bg-surface-lilac" accent="text-accent-purple" size={44} />
+              <p className="mt-3 font-display text-sm font-bold text-ink">
+                Pas encore d'insights
+              </p>
+              <p className="mt-1 max-w-[280px] text-[11px] text-ink-muted">
+                Ajoutez quelques transactions et Zyric générera automatiquement des analyses.
+              </p>
+            </div>
+          ) : (
+            <ul className="mt-4 space-y-3">
+              {insights.map((it, i) => (
+                <li key={i} className="flex items-start gap-3 rounded-2xl border border-white/60 bg-white/70 p-3">
+                  <IconBadge name={it.icon} tint={it.tint} accent={it.accent} size={38} />
+                  <div>
+                    <p className="text-sm font-semibold text-ink">{it.title}</p>
+                    <p className="text-[11px] text-ink-muted">{it.detail}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </Card>
       </div>
+
+      <AddTransactionSheet open={txOpen} onClose={() => setTxOpen(false)} />
     </Shell>
   );
 }

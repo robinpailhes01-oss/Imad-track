@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Icon } from "./Icon";
 import { Bell, Plus } from "lucide-react";
@@ -12,14 +12,26 @@ const tabs = [
   { href: "/account", label: "Compte", icon: "User" },
 ];
 
-export function Shell({ children }: { children: React.ReactNode }) {
+export function Shell({
+  children,
+  onAdd,
+}: {
+  children: React.ReactNode;
+  onAdd?: () => void;
+}) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleAdd = () => {
+    if (onAdd) return onAdd();
+    // Par défaut on route vers l'accueil qui gère le sheet.
+    router.push("/");
+  };
 
   return (
     <div className="flex min-h-screen justify-center bg-paper">
-      {/* Mobile frame — visible sur desktop comme sur téléphone */}
       <div className="relative flex min-h-screen w-full max-w-[430px] flex-col bg-brand-gradient shadow-[0_30px_80px_-40px_rgba(93,55,172,0.35)]">
-        <TopBar />
+        <TopBar onAdd={handleAdd} />
         <main className="flex-1 px-4 pb-32 pt-4">{children}</main>
 
         {/* Bottom nav */}
@@ -54,7 +66,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   );
 }
 
-function TopBar() {
+function TopBar({ onAdd }: { onAdd: () => void }) {
   return (
     <header className="flex items-center justify-between px-4 pt-5">
       <div className="flex items-center gap-3">
@@ -66,7 +78,7 @@ function TopBar() {
         <div>
           <p className="text-[11px] font-medium text-ink-muted">Bienvenue</p>
           <p className="font-display text-sm font-bold text-ink">
-            Nouvel utilisateur
+            Tableau de bord
           </p>
         </div>
       </div>
@@ -78,13 +90,13 @@ function TopBar() {
         >
           <Bell size={16} strokeWidth={2} />
         </button>
-        <Link
-          href="/budget"
-          aria-label="Ajouter"
-          className="flex h-10 w-10 items-center justify-center rounded-2xl bg-ink text-white shadow-pop"
+        <button
+          aria-label="Ajouter une transaction"
+          onClick={onAdd}
+          className="flex h-10 w-10 items-center justify-center rounded-2xl bg-ink text-white shadow-pop active:scale-95"
         >
           <Plus size={16} strokeWidth={2.5} />
-        </Link>
+        </button>
       </div>
     </header>
   );
