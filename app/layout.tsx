@@ -21,7 +21,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr">
-      <body className="min-h-screen bg-brand-gradient text-ink">
+      <body className="min-h-screen bg-paper text-ink">
         {children}
       </body>
     </html>

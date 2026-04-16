@@ -3,203 +3,169 @@ import { Card, Chip, IconBadge, Money, ProgressBar, SectionTitle } from "@/compo
 import { ExpensesBarChart } from "@/components/charts/ExpensesBarChart";
 import { SportActivityChart } from "@/components/charts/SportActivityChart";
 import { categories, overview, recentTransactions } from "@/lib/data";
-import { ArrowUpRight, Info } from "lucide-react";
+import { ArrowUpRight, Info, Plus, Inbox } from "lucide-react";
 import Link from "next/link";
 
 export default function HomePage() {
-  const { availableBalance, dailyAverage, spent, budgetCeiling, expensesMonth, expensesDelta, goal } = overview;
+  const { availableBalance, expensesMonth, goal } = overview;
 
   return (
     <Shell>
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+      <div className="flex flex-col gap-4">
         {/* HERO BALANCE */}
-        <section className="lg:col-span-2">
-          <div className="noise-hero relative overflow-hidden rounded-5xl bg-hero-gradient p-6 shadow-card sm:p-8">
-            <div className="relative z-10 flex items-start justify-between">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-[0.14em] text-ink-muted">
-                  Solde disponible
-                </p>
-                <div className="mt-3 flex items-end gap-2">
-                  <Money value={availableBalance} big className="balance-number" />
-                  <button
-                    aria-label="Détails"
-                    className="mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-ink-muted shadow-card"
-                  >
-                    <Info size={15} />
-                  </button>
-                </div>
-                <p className="mt-2 text-sm text-ink-muted">
-                  <span className="font-semibold text-ink">24 jours restants</span>
-                  <span className="mx-1.5 text-ink-muted/60">·</span>
-                  €{dailyAverage.toFixed(2)} par jour
-                  <span className="mx-1.5 text-ink-muted/60">·</span>
-                  Dernier
-                </p>
-                <p className="text-sm text-ink-muted">
-                  €{spent.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} de €
-                  {budgetCeiling.toLocaleString("fr-FR")}
-                </p>
+        <section className="noise-hero relative overflow-hidden rounded-4xl bg-hero-gradient p-5 shadow-card">
+          <div className="relative z-10 flex items-start justify-between">
+            <div>
+              <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-ink-muted">
+                Solde disponible
+              </p>
+              <div className="mt-2 flex items-end gap-2">
+                <Money value={availableBalance} big className="balance-number" />
+                <button
+                  aria-label="Détails"
+                  className="mb-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 text-ink-muted shadow-card"
+                >
+                  <Info size={13} />
+                </button>
               </div>
-              <Link
-                href="/reports"
-                className="flex h-10 items-center gap-1.5 rounded-full bg-white/80 px-3 text-xs font-semibold text-ink shadow-card backdrop-blur"
-              >
-                Détails
-                <ArrowUpRight size={14} strokeWidth={2.5} />
-              </Link>
+              <p className="mt-2 text-[11px] text-ink-muted">
+                Commencez par ajouter un revenu ou une dépense
+              </p>
             </div>
+          </div>
 
-            {/* Goal */}
-            <div className="relative z-10 mt-7 rounded-3xl bg-white/80 p-4 shadow-card backdrop-blur">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <IconBadge name="PiggyBank" tint="bg-surface-blush" accent="text-accent-rose" size={40} />
-                  <div>
-                    <p className="text-xs text-ink-muted">Objectif</p>
-                    <p className="font-display text-sm font-bold text-ink">
-                      {goal.title}
-                    </p>
-                  </div>
+          {/* Goal */}
+          <div className="relative z-10 mt-5 rounded-3xl bg-white/80 p-4 shadow-card backdrop-blur">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <IconBadge name="PiggyBank" tint="bg-surface-blush" accent="text-accent-rose" size={38} />
+                <div>
+                  <p className="text-[11px] text-ink-muted">Objectif</p>
+                  <p className="font-display text-sm font-bold text-ink">
+                    {goal.title}
+                  </p>
                 </div>
-                <Chip tone="positive" icon="TrendingUp">
-                  {Math.round(goal.progress * 100)}%
-                </Chip>
               </div>
-              <div className="mt-3">
-                <ProgressBar value={goal.progress} tone="pink" />
-              </div>
-              <div className="mt-2 flex items-center justify-between text-[11px] text-ink-muted">
-                <span>{goal.started}</span>
-                <span>{goal.deadline}</span>
-              </div>
+              <Chip tone="neutral">
+                {Math.round(goal.progress * 100)}%
+              </Chip>
+            </div>
+            <div className="mt-3">
+              <ProgressBar value={goal.progress} tone="pink" />
+            </div>
+            <div className="mt-2 flex items-center justify-between text-[11px] text-ink-muted">
+              <span>{goal.started}</span>
+              <span>{goal.deadline}</span>
             </div>
           </div>
         </section>
 
-        {/* RIGHT SIDE - EXPENSES SUMMARY */}
-        <section>
-          <Card>
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs font-medium text-ink-muted">Dépenses</p>
-                <div className="mt-1 flex items-center gap-2">
-                  <Money value={expensesMonth} />
-                  <Chip tone="positive" icon="ArrowDown">
-                    {expensesDelta}%
-                  </Chip>
-                </div>
+        {/* EXPENSES SUMMARY */}
+        <Card>
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-[11px] font-medium text-ink-muted">Dépenses</p>
+              <div className="mt-1">
+                <Money value={expensesMonth} />
               </div>
-              <button className="flex h-9 items-center gap-1 rounded-full bg-surface-lilac px-3 text-[11px] font-semibold text-accent-purple">
-                Année
-                <svg viewBox="0 0 12 12" className="h-3 w-3" fill="none">
-                  <path d="M3 4.5 6 7.5 9 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
             </div>
-            <div className="mt-4">
-              <ExpensesBarChart />
-            </div>
-            <p className="mt-3 text-[11px] text-ink-muted">
-              Votre mois de mai reste le plus dépensier.
-            </p>
-          </Card>
-        </section>
+            <button className="flex h-8 items-center gap-1 rounded-full bg-surface-lilac px-3 text-[11px] font-semibold text-accent-purple">
+              Année
+              <svg viewBox="0 0 12 12" className="h-3 w-3" fill="none">
+                <path d="M3 4.5 6 7.5 9 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </div>
+          <div className="mt-3">
+            <ExpensesBarChart />
+          </div>
+          <p className="mt-3 text-[11px] text-ink-muted">
+            Aucune donnée pour l'instant.
+          </p>
+        </Card>
 
         {/* CATEGORIES */}
-        <section className="lg:col-span-2">
-          <Card>
-            <SectionTitle
-              title="Catégories"
-              subtitle="Gérez vos budgets par thème"
-              action={
-                <Link
-                  href="/budget"
-                  className="rounded-full bg-ink px-4 py-2 text-[11px] font-semibold text-white shadow-soft"
-                >
-                  + Nouvelle catégorie
-                </Link>
-              }
-            />
-            <ul className="mt-4 space-y-2.5">
-              {categories.slice(0, 4).map((c) => (
-                <li
-                  key={c.id}
-                  className="flex items-center justify-between rounded-3xl border border-white/60 bg-white/80 px-3 py-2.5 transition hover:border-white hover:shadow-card"
-                >
-                  <div className="flex items-center gap-3">
-                    <IconBadge name={c.icon} tint={c.tint} accent={c.accent} />
-                    <div>
-                      <p className="font-display text-sm font-semibold text-ink">
-                        {c.name}
-                      </p>
-                      <p className="text-[11px] text-ink-muted">{c.subtitle}</p>
-                    </div>
+        <Card>
+          <SectionTitle
+            title="Catégories"
+            subtitle="Créez un budget par thème"
+            action={
+              <Link
+                href="/budget"
+                className="flex h-8 items-center gap-1 rounded-full bg-ink px-3 text-[11px] font-semibold text-white shadow-soft"
+              >
+                <Plus size={12} strokeWidth={2.8} />
+                Ajouter
+              </Link>
+            }
+          />
+          <ul className="mt-4 space-y-2">
+            {categories.slice(0, 4).map((c) => (
+              <li
+                key={c.id}
+                className="flex items-center justify-between rounded-3xl border border-white/60 bg-white/80 px-3 py-2.5"
+              >
+                <div className="flex items-center gap-3">
+                  <IconBadge name={c.icon} tint={c.tint} accent={c.accent} size={38} />
+                  <div>
+                    <p className="font-display text-sm font-semibold text-ink">
+                      {c.name}
+                    </p>
+                    <p className="text-[11px] text-ink-muted">{c.subtitle}</p>
                   </div>
-                  <button
-                    aria-label={`Ouvrir ${c.name}`}
-                    className="flex h-9 w-9 items-center justify-center rounded-full bg-ink/5 text-ink-muted"
-                  >
-                    <ArrowUpRight size={14} strokeWidth={2.5} />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </Card>
-        </section>
+                </div>
+                <button
+                  aria-label={`Ouvrir ${c.name}`}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-ink/5 text-ink-muted"
+                >
+                  <ArrowUpRight size={13} strokeWidth={2.5} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </Card>
 
         {/* SPORT ACTIVITY */}
-        <section>
-          <Card>
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs font-medium text-ink-muted">
-                  Activité sportive
-                </p>
-                <div className="mt-1 flex items-center gap-2">
-                  <Money value={-284.54} />
-                  <Chip tone="positive" icon="ArrowDown">
-                    14%
-                  </Chip>
-                </div>
-                <p className="text-[11px] text-ink-muted">
-                  sur les 30 derniers jours
-                </p>
+        <Card>
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-[11px] font-medium text-ink-muted">
+                Activité sportive
+              </p>
+              <div className="mt-1">
+                <Money value={0} />
               </div>
-              <button className="flex h-9 items-center gap-1 rounded-full bg-surface-blush px-3 text-[11px] font-semibold text-accent-rose">
-                Mois
-                <svg viewBox="0 0 12 12" className="h-3 w-3" fill="none">
-                  <path d="M3 4.5 6 7.5 9 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
+              <p className="text-[11px] text-ink-muted">30 derniers jours</p>
             </div>
-            <div className="mt-4">
-              <SportActivityChart />
-            </div>
-            <div className="mt-3 flex items-center justify-between text-[11px] text-ink-muted">
-              <span>01 jan 2026</span>
-              <span className="font-semibold text-ink">Total −€984,32</span>
-            </div>
-          </Card>
-        </section>
+            <button className="flex h-8 items-center gap-1 rounded-full bg-surface-blush px-3 text-[11px] font-semibold text-accent-rose">
+              Mois
+              <svg viewBox="0 0 12 12" className="h-3 w-3" fill="none">
+                <path d="M3 4.5 6 7.5 9 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </div>
+          <div className="mt-3">
+            <SportActivityChart />
+          </div>
+        </Card>
 
         {/* RECENT TRANSACTIONS */}
-        <section className="lg:col-span-3">
-          <Card>
-            <SectionTitle
-              title="Transactions récentes"
-              subtitle="Vos derniers mouvements"
-              action={
-                <button className="text-[11px] font-semibold text-accent-purple">
-                  Tout voir
-                </button>
-              }
+        <Card>
+          <SectionTitle
+            title="Transactions récentes"
+            subtitle="Vos derniers mouvements"
+          />
+          {recentTransactions.length === 0 ? (
+            <EmptyState
+              title="Aucune transaction"
+              hint="Ajoutez votre première transaction pour commencer à suivre vos finances."
             />
-            <ul className="mt-4 divide-y divide-ink/5">
+          ) : (
+            <ul className="mt-3 divide-y divide-ink/5">
               {recentTransactions.map((t) => (
                 <li key={t.id} className="flex items-center justify-between py-3">
                   <div className="flex items-center gap-3">
-                    <IconBadge name={t.icon} tint={t.tint} accent={t.accent} size={40} />
+                    <IconBadge name={t.icon} tint={t.tint} accent={t.accent} size={38} />
                     <div>
                       <p className="font-display text-sm font-semibold text-ink">
                         {t.label}
@@ -209,17 +175,25 @@ export default function HomePage() {
                       </p>
                     </div>
                   </div>
-                  <Money
-                    value={t.amount}
-                    sign
-                    className={t.amount >= 0 ? "text-emerald-600" : "text-ink"}
-                  />
+                  <Money value={t.amount} sign />
                 </li>
               ))}
             </ul>
-          </Card>
-        </section>
+          )}
+        </Card>
       </div>
     </Shell>
+  );
+}
+
+function EmptyState({ title, hint }: { title: string; hint: string }) {
+  return (
+    <div className="mt-4 flex flex-col items-center rounded-3xl border border-dashed border-ink/10 bg-white/50 p-6 text-center">
+      <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-surface-lilac text-accent-purple">
+        <Inbox size={20} strokeWidth={2} />
+      </span>
+      <p className="font-display text-sm font-bold text-ink">{title}</p>
+      <p className="mt-1 max-w-[260px] text-[11px] text-ink-muted">{hint}</p>
+    </div>
   );
 }
